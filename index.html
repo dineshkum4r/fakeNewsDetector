@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detector</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        .main-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .text-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 20px rgba(102,126,234,0.1);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px auto;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102,126,234,0.3);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        .results-section {
+            display: none;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .bias-score {
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(255,107,107,0.2);
+        }
+
+        .bias-score h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .bias-level {
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .analysis-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .analysis-card h4 {
+            color: #667eea;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .analysis-card p {
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .error-message {
+            background: #ff6b6b;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .examples-section {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .examples-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .example-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .example-btn {
+            background: rgba(102,126,234,0.1);
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .main-card {
+                padding: 20px;
+                margin: 10px 0;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .example-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Fake News Detector</h1>
+            <p>Analyze news articles for authenticity and credibility using advanced AI</p>
+        </div>
+
+        <div class="main-card">
+            <div class="input-section">
+                <label for="articleText">
+                    <i class="fas fa-edit"></i> Paste your news article text here:
+                </label>
+                <textarea 
+                    id="articleText" 
+                    class="text-input" 
+                    placeholder="Copy and paste the news article you want to analyze for authenticity and credibility. The more text you provide, the more accurate the analysis will be..."
+                ></textarea>
+            </div>
+
+            <button id="analyzeBtn" class="analyze-btn">
+                <i class="fas fa-search"></i>
+                Check Authenticity
+            </button>
+
+            <div id="loadingSpinner" class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Analyzing article for authenticity and credibility...</p>
+            </div>
+
+            <div id="errorMessage" class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorText"></span>
+            </div>
+
+            <div id="resultsSection" class="results-section">
+                <div class="bias-score">
+                    <h3><i class="fas fa-chart-bar"></i> Authenticity Analysis</h3>
+                    <div id="biasScore" class="score-value">0</div>
+                    <div id="biasLevel" class="bias-level">Unknown</div>
+                </div>
+
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <h4><i class="fas fa-balance-scale"></i> Overall Assessment</h4>
+                        <p id="overallAssessment">Analysis results will appear here...</p>
+                    </div>
+
+                    <div class="analysis-card">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Red Flags</h4>
+                        <p id="biasIndicators">Potential credibility issues will be listed here...</p>
+                    </div>
+
+                    <div class="analysis-card">
+                        <h4><i class="fas fa-check-circle"></i> Credibility Factors</h4>
+                        <p id="keyIssues">Positive credibility indicators will be highlighted here...</p>
+                    </div>
+
+                    <div class="analysis-card">
+                        <h4><i class="fas fa-lightbulb"></i> Verification Tips</h4>
+                        <p id="recommendations">Tips for verifying this information will appear here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="examples-section">
+            <h3><i class="fas fa-lightbulb"></i> Try These Examples</h3>
+            <div class="example-buttons">
+                <button class="example-btn" onclick="loadExample('neutral')">Load Credible Article</button>
+                <button class="example-btn" onclick="loadExample('biased')">Load Suspicious Article</button>
+                <button class="example-btn" onclick="loadExample('political')">Load Mixed Article</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000'; // Change this to your backend URL
+
+        const examples = {
+            neutral: `The World Health Organization announced today that global vaccination rates have increased by 15% compared to last year. The data, collected from 194 member countries, shows significant progress in immunization programs worldwide. Dr. Maria Santos, WHO Director-General, stated during a press conference in Geneva: "These numbers represent millions of lives protected through coordinated international efforts." The report indicates that Sub-Saharan Africa showed the most improvement with a 23% increase. The organization credits improved supply chains and increased funding from international donors for the progress. However, challenges remain in remote areas where healthcare infrastructure is limited. The WHO plans to release detailed country-by-country data next month.`,
+            
+            biased: `BREAKING: Government LIES exposed! The so-called "health experts" are pushing their dangerous agenda on innocent families again! They claim their experimental injections are "safe and effective" but REFUSE to tell you the TRUTH about the thousands of people who have suffered serious side effects! Wake up, people! This is all about CONTROL and MONEY! Big Pharma is getting richer while they poison our children! The mainstream media won't report this because they're being paid to keep you in the dark. Don't be a sheep! Do your own research and you'll discover the SHOCKING truth they don't want you to know! Share this before they delete it! #TruthSeeker #WakeUpSheeple`,
+            
+            political: `Senator Johnson's new healthcare bill passed the House yesterday with a 218-210 vote, largely along party lines. Democrats argue the legislation will expand coverage to 2 million Americans, while Republicans claim it will increase the deficit by $50 billion over ten years. The Congressional Budget Office has not yet released its analysis. Healthcare advocacy groups have mixed reactions, with some praising expanded coverage and others expressing concern about implementation costs. The bill now moves to the Senate, where its passage is uncertain given the narrow majority. President Smith has indicated support for the legislation. Insurance industry representatives declined to comment pending further review.`
+        };
+
+        function loadExample(type) {
+            document.getElementById('articleText').value = examples[type];
+            // Scroll to the text area
+            document.getElementById('articleText').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        async function analyzeBias() {
+            const articleText = document.getElementById('articleText').value.trim();
+            
+            if (!articleText) {
+                showError('Please enter some article text to analyze.');
+                return;
+            }
+
+            if (articleText.length < 50) {
+                showError('Please provide more text for accurate analysis (at least 50 characters).');
+                return;
+            }
+
+            // Show loading state
+            setLoadingState(true);
+            hideError();
+            hideResults();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: articleText
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showError(`Analysis failed: ${error.message}. Please check your connection and try again.`);
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        function setLoadingState(loading) {
+            const btn = document.getElementById('analyzeBtn');
+            const spinner = document.getElementById('loadingSpinner');
+            
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+                spinner.style.display = 'block';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-search"></i> Check Authenticity';
+                spinner.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('resultsSection').style.display = 'none';
+        }
+
+        function displayResults(data) {
+            // Extract information from the response
+            const credibilityScore = data.credibility_score || 0;
+            const analysis = data.analysis || 'No analysis available';
+            
+            // Update credibility score and level
+            document.getElementById('biasScore').textContent = credibilityScore;
+            document.getElementById('biasLevel').textContent = getCredibilityLevel(credibilityScore);
+            
+            // Update score card color based on credibility
+            updateScoreColor(credibilityScore);
+            
+            // Parse the analysis text to extract different sections
+            const sections = parseAnalysis(analysis);
+            
+            document.getElementById('overallAssessment').textContent = sections.overall || analysis;
+            document.getElementById('biasIndicators').textContent = sections.redFlags || data.red_flags || 'No major red flags identified';
+            document.getElementById('keyIssues').textContent = sections.credibilityFactors || data.credibility_factors || 'Standard credibility markers present';
+            document.getElementById('recommendations').textContent = sections.recommendations || data.verification_tips || 'Cross-check with multiple reliable sources';
+            
+            // Show results
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function getCredibilityLevel(score) {
+            if (score >= 8) return 'Highly Credible';
+            if (score >= 6) return 'Mostly Credible';
+            if (score >= 4) return 'Mixed Credibility';
+            if (score >= 2) return 'Low Credibility';
+            return 'Highly Suspicious';
+        }
+
+        function updateScoreColor(score) {
+            const scoreDiv = document.querySelector('.bias-score');
+            if (score >= 7) {
+                scoreDiv.style.background = 'linear-gradient(135deg, #5cb85c, #4caf50)';
+            } else if (score >= 5) {
+                scoreDiv.style.background = 'linear-gradient(135deg, #ffa726, #ffdd59)';
+            } else if (score >= 3) {
+                scoreDiv.style.background = 'linear-gradient(135deg, #ff6b6b, #ffa726)';
+            } else {
+                scoreDiv.style.background = 'linear-gradient(135deg, #ff4757, #ff3838)';
+            }
+        }
+
+        function parseAnalysis(analysisText) {
+            // This function attempts to extract different sections from the analysis
+            const sections = {
+                overall: '',
+                redFlags: '',
+                credibilityFactors: '',
+                recommendations: ''
+            };
+            
+            // Simple parsing - look for key phrases
+            const lines = analysisText.split('\n').filter(line => line.trim());
+            
+            let currentSection = 'overall';
+            
+            for (let line of lines) {
+                const lowerLine = line.toLowerCase();
+                
+                if (lowerLine.includes('red flag') || lowerLine.includes('suspicious') || lowerLine.includes('concern')) {
+                    currentSection = 'redFlags';
+                } else if (lowerLine.includes('credible') || lowerLine.includes('reliable') || lowerLine.includes('trustworthy')) {
+                    currentSection = 'credibilityFactors';
+                } else if (lowerLine.includes('recommend') || lowerLine.includes('verify') || lowerLine.includes('check')) {
+                    currentSection = 'recommendations';
+                }
+                
+                if (sections[currentSection]) {
+                    sections[currentSection] += ' ' + line;
+                } else {
+                    sections[currentSection] = line;
+                }
+            }
+            
+            // If no specific sections found, put everything in overall
+            if (!sections.overall && analysisText) {
+                sections.overall = analysisText;
+            }
+            
+            return sections;
+        }
+
+        // Event listeners
+        document.getElementById('analyzeBtn').addEventListener('click', analyzeBias);
+
+        // Allow Enter key to trigger analysis (with Ctrl/Cmd)
+        document.getElementById('articleText').addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                analyzeBias();
+            }
+        });
+
+        // Auto-resize textarea
+        document.getElementById('articleText').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(200, this.scrollHeight) + 'px';
+        });
+    </script>
+</body>
+</html>
